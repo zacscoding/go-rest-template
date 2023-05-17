@@ -1,0 +1,44 @@
+stage: local
+
+logging:
+  level: 0 # -1: Debug, 0: Info, 1: Warn, 2: Error, 3: DPanic, 4: Panic, 5: Fatal
+  encode: console # json or console
+  development: false
+
+server:
+  port: 8080
+  read-timeout: 5s
+  write-timeout: 1m
+  graceful-shutdown: 30s
+  docs:
+    enabled: true
+    path: ./docs/docs.html
+  cors:
+    allow:
+      all: true
+
+db:
+  data-source-name: root:password@tcp(127.0.0.1:13306)/datadb?charset=utf8&parseTime=True&multiStatements=true
+  batch-size: 100
+  logging-level: 1 # -1: debug, 0: info, 1: warn, 2: error, 3: dpanic, 4: panic, 5: fatal
+  migrate:
+    enabled: true
+    dir: migrations/
+  pool:
+    max-open: 10
+    max-idle: 10
+    max-lifetime: 30m
+
+cache:
+  enabled: true
+  prefix: myapp-
+  type: redis
+  ttl: 1m
+  redis:
+    cluster: false
+    endpoints:
+      - localhost:6379
+
+metric:
+  enabled: true
+  port: 8089

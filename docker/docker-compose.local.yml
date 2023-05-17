@@ -1,0 +1,59 @@
+version: '3.1'
+services:
+  mysqldb:
+    platform: linux/amd64
+    image: mysql:8.0.30
+    container_name: mysqldb
+    hostname: mysqldb
+    command: [ '--default-authentication-plugin=mysql_native_password', '--default-storage-engine=innodb' ]
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=datadb
+    ports:
+      - "13306:3306"
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+  prometheus:
+    image: prom/prometheus:v2.3.2
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - "./prometheus-local.yml:/etc/prometheus/prometheus.yml"
+    restart: always
+
+  grafana:
+    image: grafana/grafana:8.2.2
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    restart: always
+
+  apiserver:
+    platform: linux/amd64
+    build:
+      context: ../
+    image: zacscoding/apiserver
+    container_name: apiserver
+    restart: always
+    ports:
+      - "8080:8080"
+      - "8089:8089"
+    environment:
+      - APP_SERVER_SERVER_DOCS_ENABLED=true
+      - APP_SERVER_SERVER_AUTH_JWT_TIMEOUT=1m
+      - APP_SERVER_LOGGING_LEVEL=-1
+      - APP_SERVER_DB_DATA-SOURCE-NAME=root:password@(mysqldb)/datadb?charset=utf8&parseTime=True&multiStatements=true
+      - APP_SERVER_DB_MIGRATE_ENABLED=true
+      - APP_SERVER_DB_MIGRATE_DIR=/etc/apiserver/migrations
+    command:
+      /usr/bin/apiserver
+    depends_on:
+      - mysqldb
+      - redis

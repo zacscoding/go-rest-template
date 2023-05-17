@@ -1,0 +1,77 @@
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - 386
+      - arm
+      - arm64
+    ignore:
+      - goos: darwin
+        goarch: '386'
+    binary: '{{ .ProjectName }}'
+    ldflags: '{{ .Env.LD_FLAGS }}'
+    main: ./cmd/server
+
+archives:
+  - format: tar.gz
+    rlcp: true
+    # this name template makes the OS and Arch compatible with the results of uname.
+    name_template: '{{ .ProjectName }}-{{ .Version }}.{{- tolower .Os }}-{{- if eq .Arch "amd64" }}x86_64{{- else if eq .Arch "386" }}i386{{- else }}{{ .Arch }}{{ end }}{{- if .Arm }}v{{ .Arm }}{{ end }}'
+    wrap_in_directory: true
+    files:
+      # OS specific scripts, not compiled
+      - src: docs/*
+        dst: docs/
+        strip_parent: true
+      - src: release/config.yml
+        strip_parent: true
+      - src: migrations/*.sql
+        dst: migrations/
+        strip_parent: true
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+snapshot:
+  name_template: "-snapshot"
+
+nfpms:
+  - id: package
+    package_name: apiserver
+    file_name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}-{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
+    vendor: Your Company
+    maintainer: Developers
+    homepage: https://www.yoursite.com
+    formats:
+      - deb
+      - rpm
+    priority: extra
+    contents:
+      - src: config/local.yml
+        dst: /etc/apiserver/config.yaml
+        type: config
+      - src: migrations/*.sql
+        dst: /etc/apiserver/migrations/
+      - src: docs/*
+        dst: /etc/apiserver/docs/
+      - src: release/apiserver.service
+        dst: /etc/systemd/system/apiserver.service
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

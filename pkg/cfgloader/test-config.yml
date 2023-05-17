@@ -1,0 +1,2 @@
+server:
+  write-timeout: 3m

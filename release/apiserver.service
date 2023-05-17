@@ -1,0 +1,14 @@
+[Unit]
+Description=apiserver service
+Documentation=https://www.yoursite.com
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/apiserver --config /etc/apiserver/config.yml
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=10s
+LimitNOFILE=infinity
+
+[Install]
+WantedBy=multi-user.target
